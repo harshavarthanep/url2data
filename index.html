@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Extractor | H24 Creationz Style</title>
+    <title>URL Extractor | H24 Creationz (Industry Update)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -79,7 +79,7 @@
     <header class="h-16 border-b border-neutral-800 flex items-center justify-between px-6 glass-panel z-20">
         <div class="flex items-center gap-3">
             <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-            <h1 class="font-medium tracking-wide text-lg">Batch URL Extractor</h1>
+            <h1 class="font-medium tracking-wide text-lg">H24 Batch Extractor <span class="text-xs text-neutral-500 ml-2">v2.0 (Custom Industry Logic)</span></h1>
         </div>
         <div class="flex gap-3">
             <button onclick="exportToCSV()" class="btn-zen flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-md text-sm border border-neutral-700">
@@ -97,14 +97,14 @@
         <aside class="w-1/3 min-w-[320px] max-w-[500px] border-r border-neutral-800 bg-[#0f0f0f] flex flex-col p-6 z-10 shadow-xl">
             <h2 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-4">Input URLs</h2>
             <div class="relative flex-1">
-                <textarea id="urlInput" class="w-full h-full input-zen rounded-lg p-4 text-sm text-neutral-300 resize-none font-mono" placeholder="Paste links here...&#10;https://example.com&#10;www.anotherone.io"></textarea>
+                <textarea id="urlInput" class="w-full h-full input-zen rounded-lg p-4 text-sm text-neutral-300 resize-none font-mono" placeholder="Paste links here...&#10;https://www.emirates.com&#10;www.binance.com&#10;mayoclinic.org&#10;airbnb.com"></textarea>
                 <div class="absolute bottom-4 right-4">
                     <button onclick="processURLs()" class="btn-zen bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-full shadow-lg shadow-emerald-900/50">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                     </button>
                 </div>
             </div>
-            <p class="text-xs text-neutral-600 mt-3">Supports raw text. We'll find the links automatically.</p>
+            <p class="text-xs text-neutral-600 mt-3">Supports raw text. We automatically find valid links.</p>
         </aside>
 
         <main class="flex-1 bg-neutral-900/50 relative flex flex-col">
@@ -118,7 +118,7 @@
 
             <div id="resultsList" class="flex-1 overflow-y-auto p-6 space-y-3">
                 <div id="emptyState" class="h-full flex flex-col items-center justify-center text-neutral-600">
-                    <svg class="mb-4 opacity-20" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <svg class="mb-4 opacity-20" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y8="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     <p>No data yet. Paste URLs on the left to begin.</p>
                 </div>
             </div>
@@ -148,23 +148,79 @@
 
     <script>
         // --- State Management ---
-        let sites = JSON.parse(localStorage.getItem('h24_extractor_data') || '[]');
+        let sites = JSON.parse(localStorage.getItem('h24_extractor_v2_data') || '[]');
 
-        // --- Keywords for Industry Guessing ---
-        const industryKeywords = {
-            'tech': ['soft', 'tech', 'app', 'io', 'ai', 'cyber', 'code', 'data', 'sys', 'web', 'dev'],
-            'healthcare': ['med', 'health', 'clinic', 'doc', 'pharm', 'bio', 'care', 'hosp', 'dental'],
-            'ecommerce': ['shop', 'store', 'cart', 'buy', 'mart', 'retail', 'sale'],
-            'finance': ['bank', 'pay', 'fin', 'money', 'invest', 'capital', 'fund', 'coin', 'crypto'],
-            'education': ['edu', 'learn', 'school', 'univ', 'academ', 'course', 'study', 'tutor'],
-            'realestate': ['estate', 'home', 'house', 'prop', 'realty', 'land'],
-            'agency': ['agency', 'media', 'creative', 'design', 'studio', 'brand', 'market']
+        // --- INDUSTRY MATCHING LOGIC (Based on uploaded document) ---
+        // Priorities: Specific rules are checked before general rules.
+        const INDUSTRY_RULES = {
+            'Adult Themes': ['porn', 'xxx', 'sex', 'adult', 'playboy'],
+            'Airlines': ['air', 'flight', 'jet', 'fly', 'aero', 'aviation', 'charter', 'ticket', 'booking', 'expedia', 'skyscanner', 'kayak'],
+            'Alcohol': ['beer', 'wine', 'liquor', 'spirit', 'vodka', 'whiskey', 'rum', 'gin', 'absolut', 'bacardi', 'heineken'],
+            'Auto – Dealerships': ['dealer', 'motors', 'autotrader', 'carmax', 'sales'],
+            'Auto – Manufacturers': ['bmw', 'honda', 'toyota', 'ford', 'mercedes', 'chevrolet', 'audi', 'tesla', 'nissan', 'hyundai', 'kia', 'volkswagen'],
+            'Auto – Other': ['tire', 'michelin', 'valvoline', 'towing', 'repair', 'mechanic', 'garage', 'parts', 'lubricant'],
+            'Bingo / Lottery': ['bingo', 'lotto', 'lottery', 'scratch', 'prize'],
+            'Books / Magazines': ['book', 'noble', 'magazine', 'press', 'publish', 'vogue', 'forbes', 'library', 'kindle'],
+            'Car Rental': ['hertz', 'avis', 'uber', 'ola', 'lyft', 'rentacar', 'carrental', 'limo'],
+            'Casino / Gambling': ['casino', 'bet', 'poker', 'gamble', 'slot', 'jackpot'],
+            'Charity / Non Profit': ['org', 'charity', 'foundation', 'donate', 'relief', 'wildlife', 'cancer', 'savethechildren'],
+            'Cigarettes / Tobacco': ['tobacco', 'cigar', 'vape', 'smoke', 'nicotine'],
+            'Classifieds': ['craigslist', 'olx', 'classified', 'list'],
+            'Clothing': ['wear', 'fashion', 'apparel', 'cloth', 'boutique', 'style', 'jeans', 'shirt', 'gap', 'forever21', 'calvin'],
+            'Clothing - Footwear': ['shoe', 'footwear', 'sneaker', 'crocs', 'nike', 'adidas', 'asics'],
+            'Cryptocurrency': ['bitcoin', 'crypto', 'coin', 'blockchain', 'wallet', 'binance', 'coinbase'],
+            'Dating': ['dating', 'match', 'harmony', 'zoosk', 'love', 'meet', 'cupid'],
+            'Education': ['edu', 'school', 'university', 'college', 'academy', 'learn', 'study', 'course', 'tutor', 'udemy', 'coursera'],
+            'Electronics': ['tech', 'apple', 'samsung', 'canon', 'nikon', 'sony', 'camera', 'audio', 'video', 'gadget'],
+            'Employment / Jobs': ['job', 'career', 'recruit', 'work', 'resume', 'linkedin', 'indeed', 'glassdoor', 'hiring'],
+            'Entertainment': ['movie', 'film', 'cinema', 'disney', 'warner', 'netflix', 'hulu', 'ticketmaster', 'event', 'concert', 'park', 'amusement'],
+            'Financial – Bank': ['bank', 'chase', 'hsbc', 'citi', 'america', 'fargo', 'credit', 'union', 'capital'],
+            'Financial – Invest': ['invest', 'stock', 'trade', 'forex', 'fund', 'fidelity', 'market', 'wealth'],
+            'Fitness / Wellness': ['gym', 'fitness', 'fit', 'yoga', 'health', 'nutrition', 'gnc', 'muscle', 'workout'],
+            'Food / Beverage': ['food', 'kitchen', 'cafe', 'restaurant', 'pizza', 'burger', 'grill', 'coffee', 'tea', 'drink', 'nestle', 'pepsi', 'coke', 'kellogg'],
+            'Furniture': ['furniture', 'ikea', 'sofa', 'chair', 'bed', 'decor', 'living'],
+            'Gaming': ['game', 'play', 'nintendo', 'xbox', 'playstation', 'steam', 'ea', 'toy'],
+            'Government': ['gov', 'state', 'federal', 'police', 'military', 'army', 'navy', 'court'],
+            'Grocery': ['market', 'grocery', 'walmart', 'target', 'wholefoods', 'safeway', 'mart'],
+            'Home Improvement': ['home', 'depot', 'repair', 'construct', 'build', 'plumb', 'roof', 'hvac', 'paint', 'decor'],
+            'Hotels / Resorts': ['hotel', 'resort', 'inn', 'stay', 'motel', 'spa', 'bnb', 'hostel', 'marriott', 'hilton', 'wyndham'],
+            'Insurance': ['insure', 'insurance', 'geico', 'allstate', 'progressive', 'cover', 'life'],
+            'Legal': ['law', 'attorney', 'legal', 'firm', 'advocate'],
+            'Medical / Health': ['med', 'health', 'clinic', 'doctor', 'hospital', 'pharm', 'dental', 'vision', 'care', 'pfizer', 'mayo'],
+            'Real Estate': ['realty', 'estate', 'property', 'zillow', 'remax', 'century21', 'home', 'house'],
+            'Social Network': ['facebook', 'instagram', 'twitter', 'tiktok', 'social', 'connect'],
+            'Technology – Software': ['soft', 'app', 'saas', 'adobe', 'microsoft', 'google', 'oracle', 'cloud', 'cyber', 'data', 'sys', 'web', 'dev', 'io', 'ai'],
+            'Telecom': ['telecom', 'mobile', 'wireless', 'verizon', 'att', 't-mobile', 'sprint', 'vodafone', 'broadband', 'cable'],
+            'Travel': ['travel', 'trip', 'tour', 'vacation', 'cruise', 'explore', 'guide'],
+            'Web Hosting': ['host', 'domain', 'godaddy', 'namecheap', 'bluehost', 'server']
         };
 
         // --- Core Functions ---
 
         function init() {
             renderList();
+        }
+
+        function guessIndustry(hostname, url) {
+            const lowerHost = hostname.toLowerCase();
+            const lowerUrl = url.toLowerCase();
+            
+            // Check specific rules first
+            for (const [industry, keywords] of Object.entries(INDUSTRY_RULES)) {
+                if (keywords.some(k => lowerHost.includes(k))) {
+                    return industry;
+                }
+            }
+
+            // Fallback for tricky URLs that might contain keywords in path
+            // (Only if not found in domain)
+            for (const [industry, keywords] of Object.entries(INDUSTRY_RULES)) {
+                if (keywords.some(k => lowerUrl.includes(k))) {
+                    return industry;
+                }
+            }
+
+            return 'General / Uncategorized';
         }
 
         function processURLs() {
@@ -174,6 +230,8 @@
             // Regex to find URLs in text
             const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/g;
             const foundMatches = input.match(urlRegex) || [];
+
+            let newCount = 0;
 
             // Process each match
             foundMatches.forEach(rawUrl => {
@@ -187,18 +245,12 @@
                     // Check if already exists to prevent duplicates
                     if (sites.some(s => s.domain === hostname)) return;
 
-                    // 1. Extract Name
+                    // 1. Extract Name (Capitalize first letter)
                     const namePart = hostname.split('.')[0];
                     const name = namePart.charAt(0).toUpperCase() + namePart.slice(1);
 
-                    // 2. Guess Industry
-                    let industry = 'General';
-                    for (const [key, words] of Object.entries(industryKeywords)) {
-                        if (words.some(w => hostname.includes(w))) {
-                            industry = key.charAt(0).toUpperCase() + key.slice(1);
-                            break;
-                        }
-                    }
+                    // 2. Guess Industry (New Logic)
+                    const industry = guessIndustry(hostname, cleanUrl);
 
                     sites.unshift({
                         id: Date.now() + Math.random(),
@@ -207,6 +259,7 @@
                         name: name,
                         industry: industry
                     });
+                    newCount++;
 
                 } catch (e) {
                     console.log('Invalid URL skipped:', rawUrl);
@@ -216,16 +269,17 @@
             saveData();
             renderList();
             document.getElementById('urlInput').value = ''; // Clear input
-            showToast(`${foundMatches.length} URLs processed`);
+            if(newCount > 0) showToast(`${newCount} URLs Processed`);
+            else showToast('No new URLs found');
         }
 
         function saveData() {
-            localStorage.setItem('h24_extractor_data', JSON.stringify(sites));
+            localStorage.setItem('h24_extractor_v2_data', JSON.stringify(sites));
         }
 
         function clearCache() {
             sites = [];
-            localStorage.removeItem('h24_extractor_data');
+            localStorage.removeItem('h24_extractor_v2_data');
             renderList();
             toggleSettings();
             showToast('Cache Cleared');
@@ -256,13 +310,17 @@
                 showToast('No data to export');
                 return;
             }
-            const headers = ['Website Name', 'Industry', 'Domain', 'Full URL'];
+            const headers = ['Website Name', 'Industry Category', 'Domain', 'Full URL'];
             const csvRows = [headers.join(',')];
 
             sites.forEach(site => {
+                // Escape quotes for CSV format
+                const safeName = site.name.replace(/"/g, '""');
+                const safeInd = site.industry.replace(/"/g, '""');
+                
                 const row = [
-                    `"${site.name}"`,
-                    `"${site.industry}"`,
+                    `"${safeName}"`,
+                    `"${safeInd}"`,
                     site.domain,
                     site.url
                 ];
@@ -273,7 +331,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "website_data_export.csv");
+            link.setAttribute("download", "industry_data_export.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -295,7 +353,7 @@
                 return;
             }
 
-            // Keep empty state in DOM but hidden to avoid re-creation
+            // Keep empty state in DOM but hidden
             if(document.getElementById('emptyState')) document.getElementById('emptyState').classList.add('hidden');
             
             listEl.innerHTML = ''; // Clear current list
